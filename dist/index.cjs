@@ -1,4 +1,4 @@
-// @nowline/action 0.8.6 — bundled 2026-10-01T06:24:15.132Z
+// @nowline/action 0.9.0 — bundled 2026-10-23T06:13:55.916Z
 "use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -26143,7 +26143,7 @@ function info(message) {
 var package_default = {
   private: true,
   name: "@nowline/action",
-  version: "0.8.6",
+  version: "0.9.0",
   description: "GitHub Action that renders Nowline roadmap diagrams in CI \u2014 file and markdown modes.",
   license: "Apache-2.0",
   engines: {
@@ -26193,11 +26193,12 @@ var package_default = {
   },
   devDependencies: {
     "@nowline/cli": "workspace:*",
+    "@nowline/layout": "workspace:*",
     "@types/mdast": "^4.0.4",
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.5",
     esbuild: "^0.28.2",
     typescript: "^7.0.2",
-    vitest: "^5.0.2"
+    vitest: "^5.0.5"
   }
 };
 
@@ -26226,16 +26227,13 @@ async function isCliAtVersion(version) {
     return false;
   }
 }
+function buildRenderArgs(args) {
+  const argv = [args.input, "-o", args.output, "-f", args.format, "-t", args.theme];
+  if (args.nonWorking) argv.push("--non-working", args.nonWorking);
+  return argv;
+}
 async function renderOnce(args) {
-  await exec("nowline", [
-    args.input,
-    "-o",
-    args.output,
-    "-f",
-    args.format,
-    "-t",
-    args.theme
-  ]);
+  await exec("nowline", buildRenderArgs(args));
 }
 
 // src/file-mode.ts
@@ -26253,7 +26251,8 @@ async function runFileMode(inputs) {
       input: inputs.input,
       output: inputs.output,
       format: inputs.format,
-      theme: inputs.theme
+      theme: inputs.theme,
+      nonWorking: inputs.nonWorking
     });
     rendered = 1;
     changedFiles.push(inputs.output);
@@ -26263,6 +26262,17 @@ async function runFileMode(inputs) {
     failed = 1;
   }
   return { rendered, failed, changedFiles };
+}
+
+// ../layout/dist/themes/index.js
+var THEME_NAMES = ["light", "dark", "grayscale"];
+var THEME_ALIASES = {
+  greyscale: "grayscale"
+};
+function normalizeThemeName(raw) {
+  const lower = raw.toLowerCase();
+  const canonical = THEME_ALIASES[lower] ?? lower;
+  return THEME_NAMES.find((name) => name === canonical);
 }
 
 // src/inputs.ts
@@ -26282,8 +26292,18 @@ function readFormat() {
 }
 function readTheme() {
   const raw = getInput("theme") || "light";
-  if (raw !== "light" && raw !== "dark") {
-    throw new Error(`theme must be "light" or "dark" (got "${raw}")`);
+  const theme = normalizeThemeName(raw);
+  if (!theme) {
+    const choices = THEME_NAMES.map((name) => `"${name}"`).join(", ");
+    throw new Error(`theme must be one of ${choices} (got "${raw}")`);
+  }
+  return theme;
+}
+function readNonWorking() {
+  const raw = getInput("non-working");
+  if (raw === "") return void 0;
+  if (raw !== "hide" && raw !== "show") {
+    throw new Error(`non-working must be "hide" or "show" (got "${raw}")`);
   }
   return raw;
 }
@@ -26306,6 +26326,7 @@ function parseInputs() {
     outputDir,
     format: readFormat(),
     theme: readTheme(),
+    nonWorking: readNonWorking(),
     cliVersion
   };
 }
@@ -28699,7 +28720,7 @@ function factorySpaceMinMax(effects, ok2, nok, type, min, max) {
   }
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/initialize/content.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/initialize/content.js
 var content = {
   tokenize: initializeContent
 };
@@ -28847,7 +28868,7 @@ function addImplementation(editMap, at, remove, add, before) {
   editMap.index.set(at, change);
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/initialize/document.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/initialize/document.js
 var document = {
   tokenize: initializeDocument
 };
@@ -31959,7 +31980,7 @@ function tokenizeSetextUnderline(effects, ok2, nok) {
   }
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/initialize/flow.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/initialize/flow.js
 var flow = {
   tokenize: initializeFlow
 };
@@ -31997,7 +32018,7 @@ function initializeFlow(effects) {
   }
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/initialize/text.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/initialize/text.js
 var resolver = {
   resolveAll: createResolver()
 };
@@ -32139,7 +32160,7 @@ function resolveAllLineSuffixes(events2, context) {
   return events2;
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/constructs.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/constructs.js
 var constructs_exports = {};
 __export(constructs_exports, {
   attentionMarkers: () => attentionMarkers,
@@ -32214,7 +32235,7 @@ var disable = {
   null: []
 };
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/create-tokenizer.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/create-tokenizer.js
 function createTokenizer(parser, initialize, from) {
   let point3 = {
     _bufferIndex: -1,
@@ -32540,7 +32561,7 @@ function serializeChunks(chunks, expandTabs) {
   return result.join("");
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/parse.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/parse.js
 function parse(options) {
   const settings = options || {};
   const constructs2 = (
@@ -32566,14 +32587,14 @@ function parse(options) {
   }
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/postprocess.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/postprocess.js
 function postprocess(events2) {
   while (!subtokenize(events2)) {
   }
   return events2;
 }
 
-// ../../node_modules/.pnpm/micromark@4.0.3/node_modules/micromark/lib/preprocess.js
+// ../../node_modules/.pnpm/micromark@4.0.3_supports-color@8.1.1/node_modules/micromark/lib/preprocess.js
 var search = /[\0\t\n\r]/g;
 function preprocess() {
   let column = 1;
@@ -32697,7 +32718,7 @@ function index(value) {
   return value && typeof value === "number" ? value : 1;
 }
 
-// ../../node_modules/.pnpm/mdast-util-from-markdown@2.0.3/node_modules/mdast-util-from-markdown/lib/index.js
+// ../../node_modules/.pnpm/mdast-util-from-markdown@2.0.3_supports-color@8.1.1/node_modules/mdast-util-from-markdown/lib/index.js
 var own2 = {}.hasOwnProperty;
 function fromMarkdown(value, encoding, options) {
   if (encoding && typeof encoding === "object") {
@@ -33406,7 +33427,7 @@ function defaultOnError(left, right) {
   }
 }
 
-// ../../node_modules/.pnpm/remark-parse@11.0.0/node_modules/remark-parse/lib/index.js
+// ../../node_modules/.pnpm/remark-parse@11.0.0_supports-color@8.1.1/node_modules/remark-parse/lib/index.js
 function remarkParse(options) {
   const self = this;
   self.parser = parser;
@@ -34879,7 +34900,8 @@ async function runMarkdownMode(inputs) {
       mdPath,
       outputDir,
       format: inputs.format,
-      theme: inputs.theme
+      theme: inputs.theme,
+      nonWorking: inputs.nonWorking
     });
     rendered += fileResult.rendered;
     failed += fileResult.failed;
@@ -34896,7 +34918,7 @@ function toPosixRelative(from, to) {
   return path4.relative(from, to).split(path4.sep).join("/");
 }
 async function processMarkdownFile(args) {
-  const { mdPath, outputDir, format, theme } = args;
+  const { mdPath, outputDir, format, theme, nonWorking } = args;
   const source = await fs3.readFile(mdPath, "utf-8");
   const { blocks } = scanMarkdown(source);
   if (blocks.length === 0) {
@@ -34911,7 +34933,7 @@ async function processMarkdownFile(args) {
   let failed = 0;
   for (const block of blocks) {
     const outPath = path4.join(outputDir, `nowline-${block.slug}.${format}`);
-    const success = await renderBlock({ block, outPath, format, theme });
+    const success = await renderBlock({ block, outPath, format, theme, nonWorking });
     if (success) {
       rendered += 1;
       renderedPaths.push(outPath);
@@ -34944,7 +34966,8 @@ async function renderBlock(args) {
       input: tmpFile,
       output: args.outPath,
       format: args.format,
-      theme: args.theme
+      theme: args.theme,
+      nonWorking: args.nonWorking
     });
     return true;
   } catch (err) {
